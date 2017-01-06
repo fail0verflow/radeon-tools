@@ -91,18 +91,15 @@ def s16(d):
 def loc(off):
     return labels.get(off, "0x%x"%off)
 
-lct = 0
-lpref = "start"
 lastadd = None
 
 def addlabel(off):
-    global labels, lct
+    global labels
     if off not in labels:
-        labels[off] = "%s_%d" % (lpref,lct)
-        lct += 1
+        labels[off] = True
 
 def dis(off, inst):
-    global lct, lastadd
+    global lastadd
     # .... .... .... .... .... .... .... ....
     #        ss ssdd dd
     rs = (inst >> 22) & 0xf
@@ -203,7 +200,7 @@ def dis(off, inst):
     elif (a,b,rd,imm) == (0x21, 0,0,0):
         # Branch register
         if lastadd is not None and lastadd[0] == rs:
-            labels[lastadd[1]] = "jmptab_0x%x" % lastadd[1]
+            labels[lastadd[1]] = "_jmptab_0x%x" % lastadd[1]
         return "b r%d" % (rs)
     elif (a,b,rs,rd,imm) == (0x22, 0,0,0,0):
         # Branch jumptable
@@ -280,6 +277,8 @@ total_size = len(data)
 code_size = total_size & ~0xfff
 jmptab_size = total_size & 0xfff
 
+lpref = "start"
+lct = 0
 labels = {}
 jtab = set()
 for i in range(code_size, total_size, 4):
@@ -289,16 +288,25 @@ for i in range(code_size, total_size, 4):
     labels[lo] = packet3.get(hi, "PKT_0x%x"%hi)
     jtab.add(lo)
 
-# first pass, for labels
+# first pass, find labels
+for i in range(0, total_size, 4):
+    inst = struct.unpack(FMT, data[i:i+4])[0]
+    if i < code_size:
+        dis(i/4, inst)
+
+# second pass, assign labels
 for i in range(0, total_size, 4):
     inst = struct.unpack(FMT, data[i:i+4])[0]
     if i/4 in jtab:
         lct = 0
         lpref = labels[i/4]
+    if i/4 in labels and labels[i/4] == True:
+        labels[i/4] = "_%s_%d" % (lpref, lct)
+        lct += 1
     if i < code_size:
         dis(i/4, inst)
 
-# second pass
+# third pass, disassemble
 for i in range(0, total_size, 4):
     inst = struct.unpack(FMT, data[i:i+4])[0]
     if i/4 in labels:
