@@ -1,5 +1,5 @@
 #!/usr/bin/python2
-import sys, struct
+import sys, struct, os.path
 
 packet3 = {
     0x10: "NOP",
@@ -91,7 +91,18 @@ def s16(d):
 def loc(off):
     return labels.get(off, "0x%x"%off)
 
+lct = 0
+lpref = "start"
+lastadd = None
+
+def addlabel(off):
+    global labels, lct
+    if off not in labels:
+        labels[off] = "%s_%d" % (lpref,lct)
+        lct += 1
+
 def dis(off, inst):
+    global lct, lastadd
     # .... .... .... .... .... .... .... ....
     #        ss ssdd dd
     rs = (inst >> 22) & 0xf
@@ -160,14 +171,20 @@ def dis(off, inst):
             return "orrd r%d, r%d, #0x%x" % (rd, rs, (imm>>6) << (imm&0x3f))
     elif b == 0 and a < len(opc_i) and opc_i[a] is not None:
         # Register-immediate instructions
-        if opc_i[a][:2] == "ls":
+        if a == 1:
+            lastadd = (rd, imm)
+        if a == 1 and rs == 0:
+            return "mov r%d, #0x%x" % (rd, imm)
+        elif opc_i[a][:2] == "ls":
             return "%s r%d, r%d, #%d" % (opc_i[a], rd, rs, imm)
         else:
             return "%s r%d, r%d, #0x%x" % (opc_i[a], rd, rs, imm)
     elif b == 1 and a in (0x1, 0x2, 0x11, 0x12):
         # Register-immediate instructions (sign-extended arg)
         imm = s16(imm)
-        if imm < 0:
+        if a == 1 and rs == 0:
+            return "mov r%d, #0x%x" % (rd, s16(imm))
+        elif imm < 0:
             return "%s r%d, r%d, #-0x%x" % (opc_i[a], rd, rs, -imm)
         else:
             return "%s r%d, r%d, #0x%x" % (opc_i[a], rd, rs, imm)
@@ -181,25 +198,31 @@ def dis(off, inst):
         return "%s r%d, r%d, #0x%x" % (opc_i[a], rd, rs, s16(imm) & 0xffffffffffffffff)
     elif (a,b,rs,rd) == (0x20, 0,0,0):
         # Branch
+        addlabel(imm)
         return "b %s  " % (loc(imm))
     elif (a,b,rd,imm) == (0x21, 0,0,0):
         # Branch register
+        if lastadd is not None and lastadd[0] == rs:
+            labels[lastadd[1]] = "jmptab_0x%x" % lastadd[1]
         return "b r%d" % (rs)
     elif (a,b,rs,rd,imm) == (0x22, 0,0,0,0):
         # Branch jumptable
         return "btab\n"
     elif (a,b,rs,rd) == (0x23, 0,0,0):
         # Branch and link (call)
+        addlabel(imm)
         return "bl %s  " % (loc(imm))
     elif (a,b,rs,rd,imm) == (0x24, 0,0,0,0):
         # Return
         return "ret\n"
     elif (a,b,rd) == (0x25, 0,0):
         # Compare and Branch if Zero
-        return "cbz r%d, 0x%x" % (rs, s16(imm)+off)
+        addlabel(s16(imm)+off)
+        return "cbz r%d, %s" % (rs, loc(s16(imm)+off))
     elif (a,b,rd) == (0x26, 0,0):
         # Compare and Branch if Nonzero
-        return "cbnz r%d, 0x%x" % (rs, s16(imm)+off)
+        addlabel(s16(imm)+off)
+        return "cbnz r%d, %s" % (rs, loc(s16(imm)+off))
     elif (a,rs) == (0x30,0):
         # Load immediate (other half may be 0000 or ffff)
         if b == 0:
@@ -240,11 +263,17 @@ def jmptab(val):
     hi = val >> 16
     lo = val & 0xffff
     if hi in packet3:
-        return "[%s] = 0x%x" % (packet3[hi], lo)
+        return "[%s] = %s" % (packet3[hi], loc(lo))
     else:
-        return "[0x%x] = 0x%x" % (hi, lo)
+        return "[0x%x] = %s" % (hi, loc(lo))
+
+FMT = ">I"
 
 with open(sys.argv[1], "r") as fd:
+    base = os.path.split(sys.argv[1])[-1]
+    if base.lower() == base:
+        fd.read(0x100)
+        FMT = "<I"
     data = fd.read()
 
 total_size = len(data)
@@ -252,18 +281,31 @@ code_size = total_size & ~0xfff
 jmptab_size = total_size & 0xfff
 
 labels = {}
+jtab = set()
 for i in range(code_size, total_size, 4):
-    val = struct.unpack(">I", data[i:i+4])[0]
+    val = struct.unpack(FMT, data[i:i+4])[0]
     hi = val >> 16
     lo = val & 0xffff
     labels[lo] = packet3.get(hi, "PKT_0x%x"%hi)
+    jtab.add(lo)
 
+# first pass, for labels
 for i in range(0, total_size, 4):
-    inst = struct.unpack(">I", data[i:i+4])[0]
+    inst = struct.unpack(FMT, data[i:i+4])[0]
+    if i/4 in jtab:
+        lct = 0
+        lpref = labels[i/4]
+    if i < code_size:
+        dis(i/4, inst)
+
+# second pass
+for i in range(0, total_size, 4):
+    inst = struct.unpack(FMT, data[i:i+4])[0]
     if i/4 in labels:
-        print
+        if i/4 in jtab:
+            print
         print labels[i/4] + ":"
     if i < code_size:
-        print "%4x  %08x | %s" % (i/4, inst, dis(i/4, inst))
+        print "    %s" % (dis(i/4, inst))
     else:
-        print "%4x  %08x | %s" % (i/4, inst, jmptab(inst))
+        print "#J%s" % (jmptab(inst))
