@@ -11,7 +11,7 @@ size.
 To convert Bonaire firmware to work on Liverpool:
 
 ```shell
-python2 resize_firmware.py bonaire_pfp.bin 17024 liverpool_pfp.bin
-python2 resize_firmware.py bonaire_me.bin 17024 liverpool_me.bin
+python3 resize_firmware.py bonaire_pfp.bin 17024 liverpool_pfp.bin
+python3 resize_firmware.py bonaire_me.bin 17024 liverpool_me.bin
 cp bonaire_ce.bin liverpool_ce.bin  # already the correct size
 ```

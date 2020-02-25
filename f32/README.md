@@ -22,7 +22,7 @@ Note that some registers are special:
 ### Usage
 
 ```shell
-$ python f32dis.py /lib/firmware/radeon/LIVERPOOL_pfp.bin
+$ python3 f32dis.py /lib/firmware/radeon/LIVERPOOL_pfp.bin
    0  c4340025 | ldw r13, [r0, #0x25]
    1  c438001e | ldw r14, [r0, #0x1e]
    2  9740000b | cbz r13, 0xd

@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 import sys, struct, os.path
 
 packet3 = {
@@ -266,7 +266,7 @@ def jmptab(val):
 
 FMT = ">I"
 
-with open(sys.argv[1], "r") as fd:
+with open(sys.argv[1], "rb") as fd:
     base = os.path.split(sys.argv[1])[-1]
     if base.lower() == base:
         fd.read(0x100)
@@ -292,28 +292,28 @@ for i in range(code_size, total_size, 4):
 for i in range(0, total_size, 4):
     inst = struct.unpack(FMT, data[i:i+4])[0]
     if i < code_size:
-        dis(i/4, inst)
+        dis(i//4, inst)
 
 # second pass, assign labels
 for i in range(0, total_size, 4):
     inst = struct.unpack(FMT, data[i:i+4])[0]
-    if i/4 in jtab:
+    if i//4 in jtab:
         lct = 0
-        lpref = labels[i/4]
-    if i/4 in labels and labels[i/4] == True:
-        labels[i/4] = "_%s_%d" % (lpref, lct)
+        lpref = labels[i//4]
+    if i//4 in labels and labels[i//4] == True:
+        labels[i//4] = "_%s_%d" % (lpref, lct)
         lct += 1
     if i < code_size:
-        dis(i/4, inst)
+        dis(i//4, inst)
 
 # third pass, disassemble
 for i in range(0, total_size, 4):
     inst = struct.unpack(FMT, data[i:i+4])[0]
-    if i/4 in labels:
-        if i/4 in jtab:
-            print
-        print labels[i/4] + ":"
+    if i//4 in labels:
+        if i//4 in jtab:
+            print("")
+        print(labels[i//4] + ":")
     if i < code_size:
-        print "    %s" % (dis(i/4, inst))
+        print("    %s" % (dis(i//4, inst)))
     else:
-        print "#J%s" % (jmptab(inst))
+        print("#J%s" % (jmptab(inst)))
