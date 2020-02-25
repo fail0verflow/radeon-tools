@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import sys
 from rai import *
 
@@ -15,16 +15,16 @@ else:
 try:
     space = rai.chip_spaces[space]
 except KeyError:
-    print "Unknown ChipSpace"
+    print("Unknown ChipSpace")
     sys.exit(0)
 
 try:
     reg = space.addrs[addr]
 except KeyError:
-    print "Unknown Register"
+    print("Unknown Register")
     sys.exit(0)
 
 if len(sys.argv) < 4:
-    print reg
+    print(reg)
 else:
-    print reg.value(int(sys.argv[3], 0))
+    print(reg.value(int(sys.argv[3], 0)))

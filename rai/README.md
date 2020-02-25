@@ -10,15 +10,15 @@ You need PLY installed (`pip install ply`) for this to work.
 Obtain a RAI file (e.g. bonaire.rai) and parse it into pickle format:
 
 ```shell
-$ python raiparse.py bonaire.rai bonaire.pickle
+$ python3 raiparse.py bonaire.rai bonaire.pickle
 ```
 
 Then you can explain individual registers by offset or name:
 
 ```shell
-$ python showreg.py GpuF0Reg '0xb02<<2' 
+$ python3 showreg.py GpuF0Reg '0xb02<<2' 
 - or -
-$ python showregname.py HDP_NONSURFACE_INFO
+$ python3 showregname.py HDP_NONSURFACE_INFO
 HDP_NONSURFACE_INFO (GpuF0Reg:0x2c08,GpuF1Reg:0x2c08) 32bit:
        0  NONSURF_ADDR_TYPE
           - 0: physical address with no translation. 
@@ -32,7 +32,7 @@ HDP_NONSURFACE_INFO (GpuF0Reg:0x2c08,GpuF1Reg:0x2c08) 32bit:
 Or dump the entire address list:
 
 ```shell
-$ python addresslist.py GpuF0Reg
+$ python3 addresslist.py GpuF0Reg
 0x0 MM_INDEX
 0x4 MM_DATA
 0x18 MM_INDEX_HI
@@ -50,7 +50,7 @@ Or get a bunch of C-style #defines and debug print calls, suitable for kernel
 driver debugging:
 
 ```shell
-$ python defines.py GpuF0Reg
+$ python3 defines.py GpuF0Reg
 #define MM_INDEX 0x0
 #define MM_DATA 0x4
 #define MM_INDEX_HI 0x18
@@ -68,7 +68,7 @@ $ python defines.py GpuF0Reg
 You can also dump the entire database:
 
 ```shell
-$ python dumpmap.py GpuF0Reg
+$ python3 dumpmap.py GpuF0Reg
 ChipInfo:
   RELEASE: 'Chip Spec 0.28'
   ASIC_VENDOR_ID: 4098
@@ -86,7 +86,7 @@ If you take some live register dumps from the hardware, you can decode them
 into readable form:
 
 ```shell
-$ python dumpregs.py GpuF0Reg examples/regs_linux.dump
+$ python3 dumpregs.py GpuF0Reg examples/regs_linux.dump
 MM_INDEX (GpuBlockIO:0x0,GpuF0Reg:0x0,GpuF1Reg:0x0) 32bit: 0x6998
     30:0  MM_OFFSET = 0x6998
       31  MM_APER = 0x0
@@ -97,7 +97,7 @@ MM_INDEX (GpuBlockIO:0x0,GpuF0Reg:0x0,GpuF1Reg:0x0) 32bit: 0x6998
 And diff two dumps:
 
 ```diff
-$ python diffregs.py GpuF0Reg examples/regs_fbsd.dump examples/regs_linux.dump
+$ python3 diffregs.py GpuF0Reg examples/regs_fbsd.dump examples/regs_linux.dump
 -MM_INDEX (GpuBlockIO:0x0,GpuF0Reg:0x0,GpuF1Reg:0x0) 32bit: 0x6610
 +MM_INDEX (GpuBlockIO:0x0,GpuF0Reg:0x0,GpuF1Reg:0x0) 32bit: 0x6998
 -    30:0  MM_OFFSET = 0x6610

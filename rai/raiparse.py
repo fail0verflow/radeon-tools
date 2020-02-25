@@ -1,4 +1,5 @@
-import sys, cPickle
+#!/usr/bin/python3
+import sys, pickle
 import ply.lex as lex
 import ply.yacc as yacc
 from rai import *
@@ -328,5 +329,5 @@ def p_error(t):
 parser = yacc.yacc(debug=1)
 
 rai = parser.parse(open(sys.argv[1]).read())
-with open(sys.argv[2], "w") as fd:
-    cPickle.dump(rai, fd)
+with open(sys.argv[2], "wb") as fd:
+    pickle.dump(rai, fd)

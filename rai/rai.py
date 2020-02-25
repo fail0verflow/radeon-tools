@@ -1,4 +1,5 @@
-import cPickle
+#!/usr/bin/python3
+import pickle
 
 def it(s, pfx="  "):
     return pfx + str(s).replace("\n", "\n"+pfx)[:-len(pfx)]
@@ -84,5 +85,5 @@ class Range(tuple):
     pass
 
 def load_default_rai():
-    return cPickle.load(open("bonaire.pickle"))
+    return pickle.load(open("bonaire.pickle", "rb"))
 
