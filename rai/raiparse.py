@@ -281,7 +281,7 @@ def p_reg_field(p):
     """reg_field : field_name INT ':' INT NUM field_flags ';'
                  | field_name INT ':' INT INDEX '=' SYMBOL field_flags ';'
                  | field_name INT ':' INT DATA '=' SYMBOL field_flags ';'
-                 | field_name INT ':' INT ALPHA '{' alpha_defs '}' field_flags ';'
+                 | field_name INT ':' INT ALPHA '{' alpha_defs_or_none '}' field_flags ';'
     """
     f = Field()
     f.name = p[1]
@@ -292,7 +292,10 @@ def p_reg_field(p):
         f.target = p[7]
         f.flags = p[8]
     elif f.type == 'ALPHA':
-        f.values = p[7]
+        if p[7] is None:
+            f.type = "NUM"
+        else:
+            f.values = p[7]
         f.flags = p[9]
     else:
         f.flags = p[6]
@@ -309,6 +312,16 @@ def p_field_flags(p):
                    | W
                    |"""
     p[0] = p[1] if len(p) > 1 else None
+
+def p_alpha_defs_or_none(p):
+    """alpha_defs_or_none : alpha_defs
+                          | STRING"""
+    if isinstance(p[1], str):
+        p[0] = None
+        if p[1] != "None": # What is this ALPHA { "None" } junk?
+            print("Garbage ALPHA define '%s' (line %d)" % (p[1],p.lexer.lineno))
+    else:
+        p[0] = p[1]
 
 def p_alpha_defs(p):
     """alpha_defs : alpha_defs ',' alpha_def
