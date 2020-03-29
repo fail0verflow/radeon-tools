@@ -348,7 +348,10 @@ def p_fixedbase(p):
     p[0] = p[2]
 
 def p_error(t):
-    print("Syntax error at %s:'%s' (line %d)" % (t.type,t.value,t.lineno))  
+    if t is None:
+        print("Syntax error at EOF")
+    else:
+        print("Syntax error at %s:'%s' (line %d)" % (t.type,t.value,t.lineno))
 
 parser = yacc.yacc(debug=1)
 
