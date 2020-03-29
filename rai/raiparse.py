@@ -94,9 +94,30 @@ def t_NEWLINE(t):
 
 def t_SYMBOL(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
-    if t.value in reserved:
+    if lexer.symbol_state == "force":
+        lexer.symbol_state = "block"
+    elif t.value in reserved:
         t.type = t.value
     return t
+
+def t_lbrace(t):
+     r'\{'
+     t.type = '{'
+     lexer.symbol_state = "force"
+     return t
+
+def t_rbrace(t):
+     r'\}'
+     t.type = '}'
+     lexer.symbol_state = None
+     return t
+
+def t_semicolon(t):
+     r';'
+     t.type = ';'
+     if lexer.symbol_state == "block":
+        lexer.symbol_state = "force"
+     return t
 
 # Ignored characters
 t_ignore = " \t\r"
@@ -109,6 +130,7 @@ t_mlcomment_error = t_error
 
 # Build the lexer
 lexer = lex.lex()
+lexer.symbol_state = None
 
 
 # Parsing rules
