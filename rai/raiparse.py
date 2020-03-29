@@ -241,7 +241,8 @@ def p_block_registers_body(p):
     else:
         if p[2].name in p[1]:
             print("Duplicate register '%s', ignoring! (ending at line %d)" % (p[2].name, p.lexer.lineno))
-        p[1][p[2].name] = p[2]
+        else:
+            p[1][p[2].name] = p[2]
         p[0] = p[1]
 
 def p_block_register(p):
