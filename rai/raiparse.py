@@ -58,6 +58,8 @@ def t_STRING(t):
     new_str = ""
     for i in range(0, len(str)):
         c = str[i]
+        if c == "\n":
+            t.lexer.lineno += 1
         if escaped:
             if c == "n":
                 c = "\n"
