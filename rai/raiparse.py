@@ -239,7 +239,8 @@ def p_block_registers_body(p):
     if len(p) == 1:
         p[0] = dict()
     else:
-        assert p[2].name not in p[1]
+        if p[2].name in p[1]:
+            print("Duplicate register '%s', ignoring! (ending at line %d)" % (p[2].name, p.lexer.lineno))
         p[1][p[2].name] = p[2]
         p[0] = p[1]
 
